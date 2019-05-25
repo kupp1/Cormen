@@ -10,8 +10,9 @@
 #include <arpa/inet.h>
 #include <pcre.h>
 #include <locale.h>
-#include "irc.h"
-#include "regex.h"
+#include <irc.h>
+#include <pcre_l.h>
+#include <strlib.h>
 
 char *server = "irc.freenode.net";
 int port = 6667;
@@ -63,19 +64,22 @@ int main(int argc, char *argv[])
     int n;
     while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0 )
     {
-
         recvBuff[n] = 0;
-        if (fputs(recvBuff, stdout) == EOF)
+        fputs(recvBuff, stdout);
+        char **msgs;
+        int msgsCount = strsplit(&msgs, recvBuff, "\r\n");
+        char *msg;
+        for (int i = 0; i < msgsCount; i++)
         {
-            printf("\n Error : Fputs error\n");
-        }
-        int pcreExecRet = doRegex(reP, recvBuff);
-        if (pcreExecRet > 7)
-        {
-            if (strcmp("PING", reP->subStrs[VERB]) == 0)
+            msg = msgs[i];
+            int pcreExecRet = doRegex(reP, msg);
+            if (pcreExecRet > 7)
             {
-                sprintf(sendBuff, "PONG %s", reP->subStrs[MSG]);
-                sendFromBuff(sockfd, sendBuff);
+                if (strcmp("PING", reP->subStrs[VERB]) == 0)
+                {
+                    sprintf(sendBuff, "PONG %s", reP->subStrs[MSG]);
+                    sendFromBuff(sockfd, sendBuff);
+                }
             }
         }
     }
