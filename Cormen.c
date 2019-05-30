@@ -10,9 +10,9 @@
 #include <arpa/inet.h>
 #include <pcre.h>
 #include <locale.h>
-#include <irc.h>
-#include <pcre_l.h>
-#include <strlib.h>
+#include "irc.h"
+#include "pcre_wrpr.h"
+#include "strlib.h"
 
 char *server = "irc.freenode.net";
 int port = 6667;
@@ -43,12 +43,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_addr.s_addr = *(unsigned long*)host->h_addr_list[0];
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
+    struct sockaddr_in servAddr;
+    servAddr.sin_addr.s_addr = *(unsigned long*)host->h_addr;
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_port = htons(port);
 
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    if (connect(sockfd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
     {
        printf("\n Error : Connect Failed \n");
        return 1;

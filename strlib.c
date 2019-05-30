@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
-#include <strlib.h>
+#include "strlib.h"
 
 int strcount(char *str, char *substr)
 {

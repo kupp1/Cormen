@@ -1,7 +1,7 @@
 #include <pcre.h>
 #include <stdio.h>
 #include <string.h>
-#include <pcre_l.h>
+#include "pcre_wrpr.h"
 
 pcreRegex makeRegex(char *regex, const unsigned char *pcreTables)
 {
