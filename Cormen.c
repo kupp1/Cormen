@@ -20,14 +20,14 @@ int port = 6667;
 char *nick = "Cormen";
 char *username = "bot";
 char *realname = "kupp bot";
+char *hostNick = "kupp";
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 
-    setlocale (LC_CTYPE, (const char *) "ru.");
-    const unsigned char *pcreTables = pcre_maketables();
+    setlocale(LC_CTYPE, (char const *)"ru.");
 
-    pcreRegex re = makeRegex(RFC2812, pcreTables);
+    pcreRegex re = makeRegex(RFC2812);
     pcreRegex *reP = &re;
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,14 +44,14 @@ int main(int argc, char *argv[])
     }
 
     struct sockaddr_in servAddr;
-    servAddr.sin_addr.s_addr = *(unsigned long*)host->h_addr;
+    servAddr.sin_addr.s_addr = *(unsigned long *)host->h_addr;
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = htons(port);
 
     if (connect(sockfd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
     {
-       printf("\n Error : Connect Failed \n");
-       return 1;
+        printf("\n Error : Connect Failed \n");
+        return 1;
     }
 
     char recvBuff[512];
@@ -62,11 +62,12 @@ int main(int argc, char *argv[])
     sendFromBuff(sockfd, sendBuff);
     join(sockfd, sendBuff, "###kupp_trash");
     int n;
-    while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0 )
+    int quitFlag = 0;
+    while ((n = read(sockfd, recvBuff, sizeof(recvBuff) - 1)) > 0)
     {
         recvBuff[n] = 0;
         fputs(recvBuff, stdout);
-        char **msgs;
+        char **msgs = NULL;
         int msgsCount = strsplit(&msgs, recvBuff, "\r\n");
         char *msg;
         for (int i = 0; i < msgsCount; i++)
@@ -80,7 +81,19 @@ int main(int argc, char *argv[])
                     sprintf(sendBuff, "PONG %s", reP->subStrs[MSG]);
                     sendFromBuff(sockfd, sendBuff);
                 }
+                if (strcmp(hostNick, reP->subStrs[NICK]) == 0 &&
+                    strcmp("PRIVMSG", reP->subStrs[VERB]) == 0 &&
+                    strcmp("QUIT", reP->subStrs[MSG]) == 0)
+                    quitFlag = 1;
             }
+            free(msgs[i]);
+            freeGroups(reP);
+        }
+        free(msgs);
+        if (quitFlag)
+        {
+            freeRegex(reP);
+            break;
         }
     }
 

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include "strlib.h"
 
-int strcount(char *str, char *substr)
+int strcount(char const *str, char const *substr)
 {
     int count = 0, subLen = strlen(substr);
-    while ( (str = strstr(str, substr)) != NULL )
+    while ((str = strstr(str, substr)) != NULL)
     {
         count++;
         str += subLen;
@@ -13,11 +13,11 @@ int strcount(char *str, char *substr)
     return count;
 }
 
-int strsplit(char ***result, char *str, char *splitstr)
+int strsplit(char ***result, char const *str, char const *splitstr)
 {
     int splitLen = strlen(splitstr);
     int sizeOfResult = strcount(str, splitstr) + 1;
-    *result = malloc(sizeOfResult * sizeof(char*));
+    *result = malloc(sizeOfResult * sizeof(char *));
     char *tmp = strstr(str, splitstr);
     for (int i = 0; i < sizeOfResult - 1; i++)
     {

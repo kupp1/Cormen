@@ -1,6 +1,6 @@
 P=Cormen
 OBJECTS=irc.o pcre_wrpr.o strlib.o
-CFLAGS = -g -Iinclude -Wall -o $(P) `pkg-config --cflags libpcre`
+CFLAGS = -g -Iinclude -Wall `pkg-config --cflags libpcre`
 LDLIBS= `pkg-config --libs libpcre`
 CC=cc
 

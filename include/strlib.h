@@ -1,4 +1,4 @@
 #pragma once
 
-int strcount(char *str, char *substr);
-int strsplit(char ***result, char *str, char *splitstr);
+int strcount(char const *str, char const *substr);
+int strsplit(char ***result, char const *str, char const *splitstr);
