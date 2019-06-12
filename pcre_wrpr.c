@@ -1,6 +1,7 @@
 #include <pcre.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "pcre_wrpr.h"
 
 int getMaxGroupsCount(char const *re)
@@ -11,15 +12,17 @@ int getMaxGroupsCount(char const *re)
     {
         int currentPos = tmp - re;
         if (!((currentPos + 2 <= reMaxIndx && *(tmp + 1) == '?' && *(tmp + 2) == ':') ||
-              (currentPos - 2 >= 0 && *(tmp - 1) == '\\' && *(tmp - 2) == '\\')))
+              (currentPos - 1 >= 0 && *(tmp - 1) == '\\')))
             count++;
         tmp++;
     }
     return count;
 }
 
-pcreRegex makeRegex(char const *regex)
+pcreRegex *makeRegex(char const *regex)
 {
+    pcreRegex *out = malloc(sizeof(pcreRegex));
+    memcpy(out, &(pcreRegex){}, sizeof(pcreRegex));
     const char *pcreErrorStr;
     int pcreErrorOffset;
     pcre *tmpReCompiled;
@@ -31,7 +34,7 @@ pcreRegex makeRegex(char const *regex)
     {
         printf("ERROR: Could not compile regex '%s': %s\n", regex, pcreErrorStr);
         pcre_free(tmpReCompiled);
-        return (pcreRegex){};
+        return out;
     }
     tmpPcreExtra = pcre_study(tmpReCompiled, 0, &pcreErrorStr);
     if (pcreErrorStr != NULL)
@@ -39,35 +42,28 @@ pcreRegex makeRegex(char const *regex)
         printf("ERROR: Could not study regex '%s': %s\n", regex, pcreErrorStr);
         pcre_free(tmpReCompiled);
         pcre_free_study(tmpPcreExtra);
-        return (pcreRegex){};
+        return out;
     }
     int maxGroups = getMaxGroupsCount(regex) + 1;
-    return (pcreRegex){.regex = regex,
-                       .reCompiled = tmpReCompiled,
-                       .pcreExtra = tmpPcreExtra,
-                       .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
-                       //.subStrs = malloc(maxGroups * sizeof(char *)),
-                       .maxGroups = maxGroups};
+    memcpy(out, &(pcreRegex){.regex = regex,
+                             .reCompiled = tmpReCompiled,
+                             .pcreExtra = tmpPcreExtra,
+                             .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
+                             //.subStrs = malloc(maxGroups * sizeof(char *)),
+                             .maxGroups = maxGroups,
+                             .subStrInxsLen = 3 * maxGroups}, sizeof(pcreRegex));
+    return out;
 }
 
 int execRegex(pcreRegex *regex)
 {
     return pcre_exec(regex->reCompiled, regex->pcreExtra, regex->str,
                      strlen(regex->str), 0, 0, regex->subStrInxs,
-                     3 * regex->maxGroups);
+                     regex->subStrInxsLen);
 }
 
 int getGroups(pcreRegex *regex, int pcreExecRet)
 {
-    /* char const *psubStrMatchStr;
-    for (int i = 0; i < pcreExecRet; i++)
-    {
-        pcre_get_substring(regex->str, regex->subStrInxs, pcreExecRet, i, &psubStrMatchStr);
-        regex->subStrs[i] = malloc(strlen(psubStrMatchStr) + 1);
-        strcpy(regex->subStrs[i], psubStrMatchStr);
-        free(psubStrMatchStr);
-    }
-    return 0; */
     return pcre_get_substring_list(regex->str, regex->subStrInxs, pcreExecRet,
                                    &regex->subStrs);
 }
@@ -89,8 +85,9 @@ int freeGroups(pcreRegex *regex)
 
 int freeRegex(pcreRegex *regex)
 {
-    pcre_free(regex->reCompiled);
-    pcre_free_study(regex->pcreExtra);
+    pcre_free((pcre*)regex->reCompiled);
+    pcre_free_study((pcre_extra*)regex->pcreExtra);
     free(regex->subStrInxs);
+    free(regex);
     return 0;
 }

@@ -27,13 +27,12 @@ int main(int argc, char *argv[])
 
     setlocale(LC_CTYPE, (char const *)"ru.");
 
-    pcreRegex re = makeRegex(RFC2812);
-    pcreRegex *reP = &re;
+    pcreRegex *re = makeRegex(RFC2812);
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        puts("Error : Could not create socket");
+        puts("Error : Could notCorme create socket");
         return 1;
     }
     struct hostent *host = gethostbyname(server);
@@ -73,26 +72,26 @@ int main(int argc, char *argv[])
         for (int i = 0; i < msgsCount; i++)
         {
             msg = msgs[i];
-            int pcreExecRet = doRegex(reP, msg);
+            int pcreExecRet = doRegex(re, msg);
             if (pcreExecRet > 7)
             {
-                if (strcmp("PING", reP->subStrs[VERB]) == 0)
+                if (strcmp("PING", re->subStrs[VERB]) == 0)
                 {
-                    sprintf(sendBuff, "PONG %s", reP->subStrs[MSG]);
+                    sprintf(sendBuff, "PONG %s", re->subStrs[MSG]);
                     sendFromBuff(sockfd, sendBuff);
                 }
-                if (strcmp(hostNick, reP->subStrs[NICK]) == 0 &&
-                    strcmp("PRIVMSG", reP->subStrs[VERB]) == 0 &&
-                    strcmp("QUIT", reP->subStrs[MSG]) == 0)
+                if (strcmp(hostNick, re->subStrs[NICK]) == 0 &&
+                    strcmp("PRIVMSG", re->subStrs[VERB]) == 0 &&
+                    strcmp("QUIT", re->subStrs[MSG]) == 0)
                     quitFlag = 1;
             }
             free(msgs[i]);
-            freeGroups(reP);
+            freeGroups(re);
         }
         free(msgs);
         if (quitFlag)
         {
-            freeRegex(reP);
+            freeRegex(re);
             break;
         }
     }

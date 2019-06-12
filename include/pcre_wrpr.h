@@ -1,19 +1,20 @@
 #pragma once
 #include <pcre.h>
 
-typedef struct
+typedef struct pcreRegexS
 {
     char const *regex;
-    pcre *reCompiled;
-    pcre_extra *pcreExtra;
+    pcre const *reCompiled;
+    pcre_extra const *pcreExtra;
     char *str;
     int *subStrInxs;
     char const **subStrs;
     int const maxGroups;
+    int const subStrInxsLen;
 } pcreRegex;
 
 int getMaxGroupsCount(char const *str);
-pcreRegex makeRegex(char const *regex);
+pcreRegex *makeRegex(char const *regex);
 int execRegex(pcreRegex *regex);
 int getGroups(pcreRegex *regex, int pcreExecRet);
 int doRegex(pcreRegex *regex, char const *str);
