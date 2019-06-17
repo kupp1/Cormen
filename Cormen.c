@@ -1,15 +1,9 @@
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
 #include <pcre.h>
 #include <locale.h>
+#include <stdbool.h>
 #include "irc.h"
 #include "pcre_wrpr.h"
 #include "strlib.h"
@@ -22,49 +16,21 @@ char *username = "bot";
 char *realname = "kupp bot";
 char *hostNick = "kupp";
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-
     setlocale(LC_CTYPE, (char const *)"ru.");
 
-    pcreRegex *re = makeRegex(RFC2812);
+    pcreRegex *re = makeRegex(RFC2812, PCRE_UTF8);
 
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
+    irc_t *irc = newIrc(server, port, nick, username, realname);
+    ircConnect(irc);
+    ircSend(irc, "NICK %s", nick);
+    ircSend(irc, "USER %s 0 * :%s", username, realname);
+    join(irc, "###kupp_trash");
+    char *recvBuff;
+    bool quitFlag = false;
+    while ((recvBuff = ircRead(irc)) != NULL)
     {
-        puts("Error : Could notCorme create socket");
-        return 1;
-    }
-    struct hostent *host = gethostbyname(server);
-    if (host == NULL)
-    {
-        puts("Invalid host");
-        return 1;
-    }
-
-    struct sockaddr_in servAddr;
-    servAddr.sin_addr.s_addr = *(unsigned long *)host->h_addr;
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_port = htons(port);
-
-    if (connect(sockfd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
-    {
-        printf("\n Error : Connect Failed \n");
-        return 1;
-    }
-
-    char recvBuff[512];
-    char sendBuff[512];
-    sprintf(sendBuff, "NICK %s", nick);
-    sendFromBuff(sockfd, sendBuff);
-    sprintf(sendBuff, "USER %s 0 * :%s", username, realname);
-    sendFromBuff(sockfd, sendBuff);
-    join(sockfd, sendBuff, "###kupp_trash");
-    int n;
-    int quitFlag = 0;
-    while ((n = read(sockfd, recvBuff, sizeof(recvBuff) - 1)) > 0)
-    {
-        recvBuff[n] = 0;
         fputs(recvBuff, stdout);
         char **msgs = NULL;
         int msgsCount = strsplit(&msgs, recvBuff, "\r\n");
@@ -76,14 +42,11 @@ int main(int argc, char *argv[])
             if (pcreExecRet > 7)
             {
                 if (strcmp("PING", re->subStrs[VERB]) == 0)
-                {
-                    sprintf(sendBuff, "PONG %s", re->subStrs[MSG]);
-                    sendFromBuff(sockfd, sendBuff);
-                }
+                    ircSend(irc, "PONG %s", re->subStrs[MSG]);
                 if (strcmp(hostNick, re->subStrs[NICK]) == 0 &&
                     strcmp("PRIVMSG", re->subStrs[VERB]) == 0 &&
                     strcmp("QUIT", re->subStrs[MSG]) == 0)
-                    quitFlag = 1;
+                    quitFlag = true;
             }
             free(msgs[i]);
             freeGroups(re);
@@ -91,15 +54,11 @@ int main(int argc, char *argv[])
         free(msgs);
         if (quitFlag)
         {
+            quit(irc, "bye!");
             freeRegex(re);
             break;
         }
     }
-
-    if (n < 0)
-    {
-        puts("Read error");
-    }
-
+    freeIrc(irc);
     return 0;
 }

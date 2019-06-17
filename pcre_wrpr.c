@@ -19,7 +19,7 @@ int getMaxGroupsCount(char const *re)
     return count;
 }
 
-pcreRegex *makeRegex(char const *regex)
+pcreRegex *makeRegex(char const *regex, int options)
 {
     pcreRegex *out = malloc(sizeof(pcreRegex));
     memcpy(out, &(pcreRegex){}, sizeof(pcreRegex));
@@ -28,7 +28,7 @@ pcreRegex *makeRegex(char const *regex)
     pcre *tmpReCompiled;
     pcre_extra *tmpPcreExtra;
     char unsigned const *pcreTables = pcre_maketables();
-    tmpReCompiled = pcre_compile(regex, 0, &pcreErrorStr, &pcreErrorOffset, pcreTables);
+    tmpReCompiled = pcre_compile(regex, options, &pcreErrorStr, &pcreErrorOffset, pcreTables);
     pcre_free((char unsigned *)pcreTables);
     if (tmpReCompiled == NULL)
     {
@@ -51,7 +51,8 @@ pcreRegex *makeRegex(char const *regex)
                              .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
                              //.subStrs = malloc(maxGroups * sizeof(char *)),
                              .maxGroups = maxGroups,
-                             .subStrInxsLen = 3 * maxGroups}, sizeof(pcreRegex));
+                             .subStrInxsLen = 3 * maxGroups},
+           sizeof(pcreRegex));
     return out;
 }
 

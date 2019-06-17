@@ -1,32 +1,86 @@
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <stdarg.h>
 #include "irc.h"
 
-int sendFromBuff(int sockfd, char *Buff)
+#define BUFF_SIZE 512
+
+irc_t *newIrc(char const *server,
+            int port,
+            char const *nick,
+            char const *username,
+            char const *realname)
 {
-    if (strlen(Buff) < 510)
-    {
-        strcat(Buff, "\r\n");
-        send(sockfd, Buff, strlen(Buff), 0);
-        printf("Send: %s", Buff);
-        return 0;
-    } else {
-        return 1;
-    }
+    irc_t *out = malloc(sizeof(irc_t));
+    memcpy(out, &(irc_t){.port = port,
+                        .sockfd = socket(AF_INET, SOCK_STREAM, 0),
+                        .nick = (char*)nick, .username = username,
+                        .realname = realname},
+           sizeof(irc_t));
+    struct hostent *host = gethostbyname(server);
+    out->servAddr = malloc(sizeof(sockaddr_in_t));
+    memcpy(out->servAddr, 
+           &(sockaddr_in_t){.sin_addr.s_addr = *(unsigned long *)host->h_addr_list[0],
+                            .sin_family = AF_INET,
+                            .sin_port = htons(port)},
+           sizeof(sockaddr_in_t));
+    return out;
 }
 
-int quit(int sockfd, char *Buff, char const *msg)
+int freeIrc(irc_t *in)
 {
-    sprintf(Buff, "QUIT :%s", msg);
-    sendFromBuff(sockfd, Buff);
+    free(in->servAddr);
+    free(in);
     return 0;
 }
 
-int join(int sockfd, char *Buff, char const *channel)
+int ircConnect(irc_t *in)
 {
-    sprintf(Buff, "JOIN %s", channel);
-    sendFromBuff(sockfd, Buff);
+    return connect(in->sockfd, (struct sockaddr *)in->servAddr,
+                   sizeof(*in->servAddr));
+}
+
+int ircSend(irc_t *in, char const *fmt, ...)
+{
+    static char sendBuff[BUFF_SIZE];
+    va_list argp;
+    va_start(argp, fmt);
+    vsnprintf(sendBuff, BUFF_SIZE, fmt, argp);
+    va_end(argp);
+    int msgLen = strlen(sendBuff);
+    if (msgLen > BUFF_SIZE - 2)
+        return 1;
+    sendBuff[msgLen] = '\r';
+    sendBuff[msgLen + 1] = '\n';
+    sendBuff[msgLen + 2] = '\0';
+    fputs(sendBuff, stdout);
+    send(in->sockfd, sendBuff, msgLen + 2, 0);
+    return 0;
+}
+
+char *ircRead(irc_t *in)
+{
+    static char recvBuff[BUFF_SIZE];
+    int n = read(in->sockfd, recvBuff, BUFF_SIZE - 1);
+    if (n <= 0)
+        return NULL;
+    recvBuff[n] = '\0';
+    return recvBuff;
+}
+
+int quit(irc_t *in, char const *msg)
+{
+    ircSend(in, "QUIT :%s", msg);
+    return 0;
+}
+
+int join(irc_t *in, char const *channel)
+{
+    ircSend(in, "JOIN %s", channel);
     return 0;
 }
 
