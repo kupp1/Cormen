@@ -73,13 +73,13 @@ char *ircRead(irc_t *in)
     return recvBuff;
 }
 
-int quit(irc_t *in, char const *msg)
+int ircQuit(irc_t *in, char const *msg)
 {
     ircSend(in, "QUIT :%s", msg);
     return 0;
 }
 
-int join(irc_t *in, char const *channel)
+int ircJoin(irc_t *in, char const *channel)
 {
     ircSend(in, "JOIN %s", channel);
     return 0;

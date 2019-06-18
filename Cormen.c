@@ -31,13 +31,13 @@ int main(int argc, char **argv)
 
     setlocale(LC_CTYPE, (char const *)"ru.");
 
-    pcreRegex *re = makeRegex(RFC2812, PCRE_UTF8);
+    pcreRegex_t *re = makeRegex(RFC2812, PCRE_UTF8);
 
     irc_t *irc = newIrc(server, port, nick, username, realname);
     ircConnect(irc);
     ircSend(irc, "NICK %s", nick);
     ircSend(irc, "USER %s 0 * :%s", username, realname);
-    join(irc, "###kupp_trash");
+    ircJoin(irc, "###kupp_trash");
     char *recvBuff;
     char inputBuff[BUFF_SIZE] = {0};
     bool quitFlag = false;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         }
         if (quitFlag || killflag)
         {
-            quit(irc, "bye!");
+            ircQuit(irc, "bye!");
             freeRegex(re);
             break;
         }

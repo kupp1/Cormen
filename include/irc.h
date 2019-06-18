@@ -23,8 +23,8 @@ int ircSend(irc_t *in, char const *fmt, ...) __attribute__(
                                           (format (printf, 2, 3)));
 char *ircRead(irc_t *in);
 
-int join(irc_t *in, char const *channel);
-int quit(irc_t *in, char const *msg);
+int ircJoin(irc_t *in, char const *channel);
+int ircQuit(irc_t *in, char const *msg);
 
 extern char *RFC2812;
 enum

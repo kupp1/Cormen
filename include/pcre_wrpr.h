@@ -1,7 +1,7 @@
 #pragma once
 #include <pcre.h>
 
-typedef struct pcreRegexS
+typedef struct pcreRegex_s
 {
     char const *regex;
     pcre const *reCompiled;
@@ -12,12 +12,12 @@ typedef struct pcreRegexS
     char const **subStrs;
     int const maxGroups;
     int const subStrInxsLen;
-} pcreRegex;
+} pcreRegex_t;
 
 int getMaxGroupsCount(char const *str);
-pcreRegex *makeRegex(char const *regex, int options);
-int execRegex(pcreRegex *regex);
-int getGroups(pcreRegex *regex, int pcreExecRet);
-int doRegex(pcreRegex *regex, char const *str);
-int freeGroups(pcreRegex *regex);
-int freeRegex(pcreRegex *regex);
+pcreRegex_t *makeRegex(char const *regex, int options);
+int execRegex(pcreRegex_t *regex);
+int getGroups(pcreRegex_t *regex, int pcreExecRet);
+int doRegex(pcreRegex_t *regex, char const *str);
+int freeGroups(pcreRegex_t *regex);
+int freeRegex(pcreRegex_t *regex);

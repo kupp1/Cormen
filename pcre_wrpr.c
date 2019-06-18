@@ -19,10 +19,10 @@ int getMaxGroupsCount(char const *re)
     return count;
 }
 
-pcreRegex *makeRegex(char const *regex, int options)
+pcreRegex_t *makeRegex(char const *regex, int options)
 {
-    pcreRegex *out = malloc(sizeof(pcreRegex));
-    memcpy(out, &(pcreRegex){}, sizeof(pcreRegex));
+    pcreRegex_t *out = malloc(sizeof(pcreRegex_t));
+    memcpy(out, &(pcreRegex_t){}, sizeof(pcreRegex_t));
     const char *pcreErrorStr;
     int pcreErrorOffset;
     pcre *tmpReCompiled;
@@ -45,31 +45,31 @@ pcreRegex *makeRegex(char const *regex, int options)
         return out;
     }
     int maxGroups = getMaxGroupsCount(regex) + 1;
-    memcpy(out, &(pcreRegex){.regex = regex,
-                             .reCompiled = tmpReCompiled,
-                             .pcreExtra = tmpPcreExtra,
-                             .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
-                             //.subStrs = malloc(maxGroups * sizeof(char *)),
-                             .maxGroups = maxGroups,
-                             .subStrInxsLen = 3 * maxGroups},
-           sizeof(pcreRegex));
+    memcpy(out, &(pcreRegex_t){.regex = regex,
+                               .reCompiled = tmpReCompiled,
+                               .pcreExtra = tmpPcreExtra,
+                               .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
+                               //.subStrs = malloc(maxGroups * sizeof(char *)),
+                               .maxGroups = maxGroups,
+                               .subStrInxsLen = 3 * maxGroups},
+           sizeof(pcreRegex_t));
     return out;
 }
 
-int execRegex(pcreRegex *regex)
+int execRegex(pcreRegex_t *regex)
 {
     return pcre_exec(regex->reCompiled, regex->pcreExtra, regex->str,
                      strlen(regex->str), 0, 0, regex->subStrInxs,
                      regex->subStrInxsLen);
 }
 
-int getGroups(pcreRegex *regex, int pcreExecRet)
+int getGroups(pcreRegex_t *regex, int pcreExecRet)
 {
     return pcre_get_substring_list(regex->str, regex->subStrInxs, pcreExecRet,
                                    &regex->subStrs);
 }
 
-int doRegex(pcreRegex *regex, char const *str)
+int doRegex(pcreRegex_t *regex, char const *str)
 {
     regex->str = (char *)str;
     int ret = execRegex(regex);
@@ -78,13 +78,13 @@ int doRegex(pcreRegex *regex, char const *str)
     return ret;
 }
 
-int freeGroups(pcreRegex *regex)
+int freeGroups(pcreRegex_t *regex)
 {
     pcre_free_substring_list(regex->subStrs);
     return 0;
 }
 
-int freeRegex(pcreRegex *regex)
+int freeRegex(pcreRegex_t *regex)
 {
     pcre_free((pcre*)regex->reCompiled);
     pcre_free_study((pcre_extra*)regex->pcreExtra);
