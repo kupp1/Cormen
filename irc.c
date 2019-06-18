@@ -4,10 +4,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include "irc.h"
-
-#define BUFF_SIZE 512
 
 irc_t *newIrc(char const *server,
             int port,
@@ -40,8 +39,10 @@ int freeIrc(irc_t *in)
 
 int ircConnect(irc_t *in)
 {
-    return connect(in->sockfd, (struct sockaddr *)in->servAddr,
+    int n = connect(in->sockfd, (struct sockaddr *)in->servAddr,
                    sizeof(*in->servAddr));
+    fcntl(in->sockfd, F_SETFL, O_NONBLOCK);
+    return n;
 }
 
 int ircSend(irc_t *in, char const *fmt, ...)

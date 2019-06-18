@@ -1,5 +1,7 @@
 #pragma once
 
+#define BUFF_SIZE 512
+
 typedef struct sockaddr_in sockaddr_in_t;
 
 typedef struct
