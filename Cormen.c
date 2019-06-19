@@ -12,7 +12,7 @@
 #include "strlib.h"
 
 char *server = "irc.freenode.net";
-int port = 6667;
+char *port = "6667";
 
 char *nick = "Cormen";
 char *username = "bot";
@@ -21,7 +21,8 @@ char *hostNick = "kupp";
 
 static bool killflag = false;
 
-void sigintHandler(int dummy) {
+void sigintHandler(int dummy)
+{
     killflag = true;
 }
 
@@ -31,7 +32,7 @@ int main(int argc, char **argv)
 
     setlocale(LC_CTYPE, (char const *)"ru.");
 
-    pcreRegex_t *re = makeRegex(RFC2812, PCRE_UTF8);
+    pcreRegex_t *re = compileRegex(RFC2812, PCRE_UTF8);
 
     irc_t *irc = newIrc(server, port, nick, username, realname);
     ircConnect(irc);

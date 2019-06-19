@@ -19,7 +19,7 @@ int getMaxGroupsCount(char const *re)
     return count;
 }
 
-pcreRegex_t *makeRegex(char const *regex, int options)
+pcreRegex_t *compileRegex(char const *regex, int options)
 {
     pcreRegex_t *out = malloc(sizeof(pcreRegex_t));
     memcpy(out, &(pcreRegex_t){}, sizeof(pcreRegex_t));

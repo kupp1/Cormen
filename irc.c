@@ -3,44 +3,47 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include "irc.h"
 
 irc_t *newIrc(char const *server,
-            int port,
-            char const *nick,
-            char const *username,
-            char const *realname)
+              char const *port,
+              char const *nick,
+              char const *username,
+              char const *realname)
 {
-    irc_t *out = malloc(sizeof(irc_t));
-    memcpy(out, &(irc_t){.port = port,
-                        .sockfd = socket(AF_INET, SOCK_STREAM, 0),
-                        .nick = (char*)nick, .username = username,
-                        .realname = realname},
-           sizeof(irc_t));
-    struct hostent *host = gethostbyname(server);
-    out->servAddr = malloc(sizeof(sockaddr_in_t));
-    memcpy(out->servAddr, 
-           &(sockaddr_in_t){.sin_addr.s_addr = *(unsigned long *)host->h_addr_list[0],
-                            .sin_family = AF_INET,
-                            .sin_port = htons(port)},
-           sizeof(sockaddr_in_t));
+    irc_t *out;
+    struct addrinfo hints, *res;
+    hints = (struct addrinfo){.ai_family = AF_UNSPEC,
+                              .ai_socktype = SOCK_STREAM};
+    if (getaddrinfo(server, port, &hints, &res))
+        out = NULL;
+    else
+    {
+        out = malloc(sizeof(irc_t));
+        memcpy(out, &(irc_t){.sockfd = socket(res->ai_family,
+                                              res->ai_socktype,
+                                              res->ai_protocol),
+                             .nick = (char*)nick,
+                             .username = username,
+                             .realname = realname,
+                             .res = res},
+               sizeof(irc_t));
+    } 
     return out;
 }
 
 int freeIrc(irc_t *in)
 {
-    free(in->servAddr);
+    freeaddrinfo(in->res);
     free(in);
     return 0;
 }
 
 int ircConnect(irc_t *in)
 {
-    int n = connect(in->sockfd, (struct sockaddr *)in->servAddr,
-                   sizeof(*in->servAddr));
+    int n = connect(in->sockfd, in->res->ai_addr, in->res->ai_addrlen);
     fcntl(in->sockfd, F_SETFL, O_NONBLOCK);
     return n;
 }
@@ -66,7 +69,7 @@ int ircSend(irc_t *in, char const *fmt, ...)
 char *ircRead(irc_t *in)
 {
     static char recvBuff[BUFF_SIZE];
-    int n = read(in->sockfd, recvBuff, BUFF_SIZE - 1);
+    int n = recv(in->sockfd, recvBuff, BUFF_SIZE - 1, 0);
     if (n <= 0)
         return NULL;
     recvBuff[n] = '\0';
