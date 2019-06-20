@@ -1,7 +1,7 @@
 P=Cormen
 OBJECTS=irc.o pcre_wrpr.o strlib.o
-CFLAGS = -g -Iinclude -Wall `pkg-config --cflags libpcre`
-LDLIBS= `pkg-config --libs libpcre`
+CFLAGS = -g -Iinclude -Wall `pkg-config --cflags libpcre libssl libcrypto` 
+LDLIBS= `pkg-config --libs libpcre libssl libcrypto`
 CC=cc
 
 $(P): $(OBJECTS)
