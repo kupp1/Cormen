@@ -22,7 +22,7 @@ irc_t *newIrc(char const *server,
               char const *nick,
               char const *username,
               char const *realname,
-              bool ssl)
+              bool ssl, bool nonblockflag)
 {
     irc_t *out;
     struct addrinfo hints, *res;
@@ -33,17 +33,17 @@ irc_t *newIrc(char const *server,
     else
     {
         out = malloc(sizeof(irc_t));
-        memcpy(out, &(irc_t){.sockfd = socket(res->ai_family,
-                                              res->ai_socktype,
-                                              res->ai_protocol),
-                             .nick = (char*)nick,
-                             .username = username,
-                             .realname = realname,
-                             .res = res,
-                             .sslflag = ssl,
-                             .ssl = NULL,
-                             .ctx = NULL},
-               sizeof(irc_t));
+        *out = (irc_t){.sockfd = socket(res->ai_family,
+                                        res->ai_socktype,
+                                        res->ai_protocol),
+                       .nick = nick,
+                       .username = username,
+                       .realname = realname,
+                       .res = res,
+                       .sslflag = ssl,
+                       .nonblockflag = nonblockflag,
+                       .ssl = NULL,
+                       .ctx = NULL};
     } 
     return out;
 }
@@ -60,6 +60,11 @@ int freeIrc(irc_t *in)
     return 0;
 }
 
+int IrcSetSocketNonblocking(irc_t *in)
+{
+    return fcntl(in->sockfd, F_SETFL, O_NONBLOCK);
+}
+
 int ircConnect(irc_t *in)
 {
     int n = connect(in->sockfd, in->res->ai_addr, in->res->ai_addrlen);
@@ -73,11 +78,12 @@ int ircConnect(irc_t *in)
         in->ssl = ssl;
         in->ctx = ctx;
     }
-    fcntl(in->sockfd, F_SETFL, O_NONBLOCK);
+    if (in->nonblockflag)
+        IrcSetSocketNonblocking(in);
     return n;
 }
 
-int ircSend(irc_t *in, char const *fmt, ...)
+int ircSend(irc_t const *in, char const *fmt, ...)
 {
     static char sendBuff[BUFF_SIZE];
     va_list argp;
@@ -98,7 +104,7 @@ int ircSend(irc_t *in, char const *fmt, ...)
     return 0;
 }
 
-char *ircRead(irc_t *in)
+char *ircRead(irc_t const *in)
 {
     static char recvBuff[BUFF_SIZE];
     int n;
@@ -112,13 +118,13 @@ char *ircRead(irc_t *in)
     return recvBuff;
 }
 
-int ircQuit(irc_t *in, char const *msg)
+int ircQuit(irc_t const *in, char const *msg)
 {
     ircSend(in, "QUIT :%s", msg);
     return 0;
 }
 
-int ircJoin(irc_t *in, char const *channel)
+int ircJoin(irc_t const *in, char const *channel)
 {
     ircSend(in, "JOIN %s", channel);
     return 0;

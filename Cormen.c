@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     pcreRegex_t *re = compileRegex(RFC2812, PCRE_UTF8);
 
     irc_t *irc = newIrc(server, port, nick, username, realname,
-                        true);
+                        true, true);
     ircConnect(irc);
     ircSend(irc, "NICK %s", nick);
     ircSend(irc, "USER %s 0 * :%s", username, realname);

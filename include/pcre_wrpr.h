@@ -4,14 +4,14 @@
 typedef struct pcreRegex_s
 {
     char const *regex;
-    pcre const *reCompiled;
-    pcre_extra const *pcreExtra;
-    int const options;
-    char *str;
+    pcre *reCompiled;
+    pcre_extra *pcreExtra;
+    int options;
+    char const *str;
     int *subStrInxs;
     char const **subStrs;
-    int const maxGroups;
-    int const subStrInxsLen;
+    int maxGroups;
+    int subStrInxsLen;
 } pcreRegex_t;
 
 int getMaxGroupsCount(char const *str);

@@ -22,7 +22,7 @@ int getMaxGroupsCount(char const *re)
 pcreRegex_t *compileRegex(char const *regex, int options)
 {
     pcreRegex_t *out = malloc(sizeof(pcreRegex_t));
-    memcpy(out, &(pcreRegex_t){}, sizeof(pcreRegex_t));
+    out = NULL;
     const char *pcreErrorStr;
     int pcreErrorOffset;
     pcre *tmpReCompiled;
@@ -44,15 +44,15 @@ pcreRegex_t *compileRegex(char const *regex, int options)
         pcre_free_study(tmpPcreExtra);
         return out;
     }
+    out = malloc(sizeof(pcreRegex_t));
     int maxGroups = getMaxGroupsCount(regex) + 1;
-    memcpy(out, &(pcreRegex_t){.regex = regex,
-                               .reCompiled = tmpReCompiled,
-                               .pcreExtra = tmpPcreExtra,
-                               .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
-                               //.subStrs = malloc(maxGroups * sizeof(char *)),
-                               .maxGroups = maxGroups,
-                               .subStrInxsLen = 3 * maxGroups},
-           sizeof(pcreRegex_t));
+    *out = (pcreRegex_t){.regex = regex,
+                         .reCompiled = tmpReCompiled,
+                         .pcreExtra = tmpPcreExtra,
+                         .subStrInxs = malloc(3 * maxGroups * sizeof(int)),
+                         .subStrs = NULL,
+                         .maxGroups = maxGroups,
+                         .subStrInxsLen = 3 * maxGroups};
     return out;
 }
 
