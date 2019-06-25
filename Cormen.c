@@ -17,72 +17,73 @@ char *port = "6697";
 char *nick = "Cormen";
 char *username = "bot";
 char *realname = "kupp bot";
-char *hostNick = "kupp";
+char *host_nick = "kupp";
 
 static bool killflag = false;
 
-void sigintHandler(int dummy)
+void sigint_handler(int dummy)
 {
     killflag = true;
 }
 
 int main(int argc, char **argv)
 {
-    signal(SIGINT, sigintHandler);
+    signal(SIGINT, sigint_handler);
 
-    setlocale(LC_CTYPE, (char const *)"ru.");
+    setlocale(LC_ALL, NULL);
 
-    pcreRegex_t *re = compileRegex(RFC2812, PCRE_UTF8);
+    pcre_regex_t *re = compile_regex(rfc2812, PCRE_UTF8, 0);
 
-    irc_t *irc = newIrc(server, port, nick, username, realname,
+    irc_t *irc = new_irc(server, port, nick, username, realname,
                         true, true);
-    ircConnect(irc);
-    ircSend(irc, "NICK %s", nick);
-    ircSend(irc, "USER %s 0 * :%s", username, realname);
-    ircJoin(irc, "###kupp_trash");
-    char *recvBuff;
-    char inputBuff[BUFF_SIZE] = {0};
-    bool quitFlag = false;
+    irc_connect(irc);
+    irc_send(irc, "NICK %s", nick);
+    irc_send(irc, "USER %s 0 * :%s", username, realname);
+    irc_join(irc, "###kupp_trash");
+    char *recv_buff;
+    char input_buff[IRC_BUFF_SIZE] = {0};
+    bool quitflag = false;
     fcntl(stdin->_fileno, F_SETFL, O_NONBLOCK);
     int n;
     while (1)
     {
-        if ((n = read(stdin->_fileno, inputBuff, BUFF_SIZE - 1)) > 0)
+        if ((n = read(stdin->_fileno, input_buff,
+                      IRC_BUFF_SIZE - 1)) > 0)
         {
-            inputBuff[n - 1] = '\0';
-            ircSend(irc, "%s", inputBuff);
+            input_buff[n - 1] = '\0';
+            irc_send(irc, "%s", input_buff);
         }
-        if ((recvBuff = ircRead(irc)))
+        if ((recv_buff = irc_read(irc)))
         {
-            fputs(recvBuff, stdout);
+            fputs(recv_buff, stdout);
             char **msgs = NULL;
-            int msgsCount = strsplit(&msgs, recvBuff, "\r\n");
+            int msgs_count = strsplit(&msgs, recv_buff, "\r\n");
             char *msg;
-            for (int i = 0; i < msgsCount; i++)
+            for (int i = 0; i < msgs_count; i++)
             {
                 msg = msgs[i];
-                int pcreExecRet = doRegex(re, msg);
-                if (pcreExecRet > 7)
+                int groups_count = do_regex(re, msg, 0, 0);
+                if (groups_count > 7)
                 {
-                    if (strcmp("PING", re->subStrs[VERB]) == 0)
-                        ircSend(irc, "PONG %s", re->subStrs[MSG]);
-                    if (strcmp(hostNick, re->subStrs[NICK]) == 0 &&
-                        strcmp("PRIVMSG", re->subStrs[VERB]) == 0 &&
-                        strcasecmp("QUIT", re->subStrs[MSG]) == 0)
-                        quitFlag = true;
+                    if (strcmp("PING", re->sub_strs[VERB]) == 0)
+                        irc_send(irc, "PONG %s", re->sub_strs[MSG]);
+                    if (strcmp(host_nick, re->sub_strs[NICK]) == 0 &&
+                        strcmp("PRIVMSG", re->sub_strs[VERB]) == 0 &&
+                        strcasecmp("QUIT", re->sub_strs[MSG]) == 0)
+                        quitflag = true;
                 }
                 free(msgs[i]);
-                freeGroups(re);
+                free_pcre_groups(re);
             }
             free(msgs);
         }
-        if (quitFlag || killflag)
+        if (quitflag || killflag)
         {
-            ircQuit(irc, "bye!");
-            freeRegex(re);
+            irc_quit(irc, "bye!");
+            free_pcre_regex(re);
             break;
         }
     }
-    freeIrc(irc);
+    free_irc(irc);
     return 0;
 }

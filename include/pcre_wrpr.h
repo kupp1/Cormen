@@ -1,23 +1,25 @@
 #pragma once
 #include <pcre.h>
 
-typedef struct pcreRegex_s
+typedef struct pcre_regex_s
 {
     char const *regex;
-    pcre *reCompiled;
-    pcre_extra *pcreExtra;
+    pcre *re_compiled;
+    pcre_extra *extra;
     int options;
     char const *str;
-    int *subStrInxs;
-    char const **subStrs;
-    int maxGroups;
-    int subStrInxsLen;
-} pcreRegex_t;
+    int *sub_strs_inxs;
+    char const **sub_strs;
+    int max_groups;
+    int sub_strs_inxs_len;
+} pcre_regex_t;
 
-int getMaxGroupsCount(char const *str);
-pcreRegex_t *compileRegex(char const *regex, int options);
-int execRegex(pcreRegex_t *regex);
-int getGroups(pcreRegex_t *regex, int pcreExecRet);
-int doRegex(pcreRegex_t *regex, char const *str);
-int freeGroups(pcreRegex_t *regex);
-int freeRegex(pcreRegex_t *regex);
+int get_max_groups_count(char const *str);
+pcre_regex_t *compile_regex(char const *regex, int options,
+                            int study_options);
+int exec_regex(pcre_regex_t *regex, int startoffset, int options);
+int get_groups(pcre_regex_t *regex, int groups_count);
+int do_regex(pcre_regex_t *regex, char const *str,
+             int startoffset, int exec_options);
+int free_pcre_groups(pcre_regex_t *regex);
+int free_pcre_regex(pcre_regex_t *regex);

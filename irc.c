@@ -9,7 +9,7 @@
 #include <openssl/err.h>
 #include "irc.h"
 
-SSL_CTX* InitCTX()
+SSL_CTX* init_ctx()
 {   
     SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
     OpenSSL_add_all_algorithms();
@@ -17,7 +17,7 @@ SSL_CTX* InitCTX()
     return ctx;
 }
 
-irc_t *newIrc(char const *server,
+irc_t *new_irc(char const *server,
               char const *port,
               char const *nick,
               char const *username,
@@ -48,7 +48,7 @@ irc_t *newIrc(char const *server,
     return out;
 }
 
-int freeIrc(irc_t *in)
+int free_irc(irc_t *in)
 {
     freeaddrinfo(in->res);
     if (in->sslflag)
@@ -60,18 +60,18 @@ int freeIrc(irc_t *in)
     return 0;
 }
 
-int IrcSetSocketNonblocking(irc_t *in)
+int irc_set_socket_nonblocking(irc_t *in)
 {
     return fcntl(in->sockfd, F_SETFL, O_NONBLOCK);
 }
 
-int ircConnect(irc_t *in)
+int irc_connect(irc_t *in)
 {
     int n = connect(in->sockfd, in->res->ai_addr, in->res->ai_addrlen);
     if (in->sslflag)
     {
         SSL_library_init();
-        SSL_CTX *ctx = InitCTX();
+        SSL_CTX *ctx = init_ctx();
         SSL *ssl = SSL_new(ctx);
         SSL_set_fd(ssl, in->sockfd);
         SSL_connect(ssl);
@@ -79,58 +79,58 @@ int ircConnect(irc_t *in)
         in->ctx = ctx;
     }
     if (in->nonblockflag)
-        IrcSetSocketNonblocking(in);
+        irc_set_socket_nonblocking(in);
     return n;
 }
 
-int ircSend(irc_t const *in, char const *fmt, ...)
+int irc_send(irc_t const *in, char const *fmt, ...)
 {
-    static char sendBuff[BUFF_SIZE];
+    static char send_buff[IRC_BUFF_SIZE];
     va_list argp;
     va_start(argp, fmt);
-    vsnprintf(sendBuff, BUFF_SIZE, fmt, argp);
+    vsnprintf(send_buff, IRC_BUFF_SIZE, fmt, argp);
     va_end(argp);
-    int msgLen = strlen(sendBuff);
-    if (msgLen > BUFF_SIZE - 2)
+    int msg_len = strlen(send_buff);
+    if (msg_len > IRC_BUFF_SIZE - 2)
         return 1;
-    sendBuff[msgLen] = '\r';
-    sendBuff[msgLen + 1] = '\n';
-    sendBuff[msgLen + 2] = '\0';
-    fputs(sendBuff, stdout);
+    send_buff[msg_len] = '\r';
+    send_buff[msg_len + 1] = '\n';
+    send_buff[msg_len + 2] = '\0';
+    fputs(send_buff, stdout);
     if (in->sslflag)
-         SSL_write(in->ssl, sendBuff, msgLen + 2);
+         SSL_write(in->ssl, send_buff, msg_len + 2);
     else
-        send(in->sockfd, sendBuff, msgLen + 2, 0);
+        send(in->sockfd, send_buff, msg_len + 2, 0);
     return 0;
 }
 
-char *ircRead(irc_t const *in)
+char *irc_read(irc_t const *in)
 {
-    static char recvBuff[BUFF_SIZE];
+    static char recv_buff[IRC_BUFF_SIZE];
     int n;
     if (in->sslflag)
-        n = SSL_read(in->ssl, recvBuff, BUFF_SIZE);
+        n = SSL_read(in->ssl, recv_buff, IRC_BUFF_SIZE);
     else 
-        n = recv(in->sockfd, recvBuff, BUFF_SIZE - 1, 0);
+        n = recv(in->sockfd, recv_buff, IRC_BUFF_SIZE - 1, 0);
     if (n <= 0)
         return NULL;
-    recvBuff[n] = '\0';
-    return recvBuff;
+    recv_buff[n] = '\0';
+    return recv_buff;
 }
 
-int ircQuit(irc_t const *in, char const *msg)
+int irc_quit(irc_t const *in, char const *msg)
 {
-    ircSend(in, "QUIT :%s", msg);
+    irc_send(in, "QUIT :%s", msg);
     return 0;
 }
 
-int ircJoin(irc_t const *in, char const *channel)
+int irc_join(irc_t const *in, char const *channel)
 {
-    ircSend(in, "JOIN %s", channel);
+    irc_send(in, "JOIN %s", channel);
     return 0;
 }
 
-char *RFC2812 =
+char *rfc2812 =
     "^" // We'll match the whole line. Start.
         // Optional prefix and the space that separates it
         // from the next thing. Prefix can be a servername,

@@ -4,32 +4,32 @@
 
 int strcount(char const *str, char const *substr)
 {
-    int count = 0, subLen = strlen(substr);
+    int count = 0, sub_len = strlen(substr);
     while ((str = strstr(str, substr)) != NULL)
     {
         count++;
-        str += subLen;
+        str += sub_len;
     }
     return count;
 }
 
 int strsplit(char ***result, char const *str, char const *splitstr)
 {
-    int splitLen = strlen(splitstr);
-    int sizeOfResult = strcount(str, splitstr) + 1;
-    *result = malloc(sizeOfResult * sizeof(char *));
+    int split_len = strlen(splitstr);
+    int size_of_result = strcount(str, splitstr) + 1;
+    *result = malloc(size_of_result * sizeof(char *));
     char *tmp = strstr(str, splitstr);
-    for (int i = 0; i < sizeOfResult - 1; i++)
+    for (int i = 0; i < size_of_result - 1; i++)
     {
-        int sizeOfSubstr = tmp - str;
-        (*result)[i] = malloc(sizeOfSubstr + 1);
-        strncpy((*result)[i], str, sizeOfSubstr);
-        (*result)[i][sizeOfSubstr] = 0;
-        str = tmp + splitLen;
+        int size_of_substr = tmp - str;
+        (*result)[i] = malloc(size_of_substr + 1);
+        strncpy((*result)[i], str, size_of_substr);
+        (*result)[i][size_of_substr] = 0;
+        str = tmp + split_len;
         tmp = strstr(str, splitstr);
     }
-    (*result)[sizeOfResult - 1] = malloc(strlen(str) + 1);
-    strcpy((*result)[sizeOfResult - 1], str);
-    (*result)[sizeOfResult - 1][strlen(str)] = 0;
-    return sizeOfResult;
+    (*result)[size_of_result - 1] = malloc(strlen(str) + 1);
+    strcpy((*result)[size_of_result - 1], str);
+    (*result)[size_of_result - 1][strlen(str)] = 0;
+    return size_of_result;
 }
