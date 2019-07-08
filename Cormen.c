@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     setlocale(LC_ALL, NULL);
 
-    pcre_regex_t *re = compile_regex(rfc2812, PCRE_UTF8, 0);
+    pcre_regex_t *re = pcre_compile_regex(rfc2812, PCRE_UTF8, 0);
 
     irc_t *irc = new_irc(server, port, nick, username, realname,
                         true, true);
@@ -62,14 +62,22 @@ int main(int argc, char **argv)
             for (int i = 0; i < msgs_count; i++)
             {
                 msg = msgs[i];
-                int groups_count = do_regex(re, msg, 0, 0);
+                int groups_count = pcre_do_regex(re, msg, 0, 0);
                 if (groups_count > 7)
                 {
                     if (strcmp("PING", re->sub_strs[VERB]) == 0)
-                        irc_send(irc, "PONG %s", re->sub_strs[MSG]);
-                    if (strcmp(host_nick, re->sub_strs[NICK]) == 0 &&
-                        strcmp("PRIVMSG", re->sub_strs[VERB]) == 0 &&
-                        strcasecmp("QUIT", re->sub_strs[MSG]) == 0)
+                        irc_send(irc, "PONG %s",
+                                 pcre_get_group(re, MSG,
+                                                groups_count));
+                    if (strcmp(host_nick,
+                               pcre_get_group(re, NICK,
+                                              groups_count)) == 0 &&
+                        strcmp("PRIVMSG",
+                               pcre_get_group(re, VERB,
+                                              groups_count)) == 0 &&
+                        strcasecmp("QUIT",
+                                   pcre_get_group(re, MSG,
+                                                  groups_count)) == 0)
                         quitflag = true;
                 }
                 free(msgs[i]);

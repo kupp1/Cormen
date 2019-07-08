@@ -1,7 +1,8 @@
 #pragma once
 #include <stdbool.h>
 #include <openssl/ssl.h>
-#include "irc_res.h"
+#include "irc_cmd_res.h"
+#include "irc_err_rpls.h"
 #define IRC_BUFF_SIZE 512
 
 typedef struct irc_s

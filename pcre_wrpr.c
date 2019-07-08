@@ -20,11 +20,10 @@ int get_max_groups_count(char const *re)
     return count;
 }
 
-pcre_regex_t *compile_regex(char const *regex, int options,
+pcre_regex_t *pcre_compile_regex(char const *regex, int options,
                             int study_options)
 {
-    pcre_regex_t *out = malloc(sizeof(pcre_regex_t));
-    out = NULL;
+    pcre_regex_t *out = NULL;
     const char *error_str;
     int error_offset;
     pcre *tmp_re_compiled;
@@ -64,7 +63,7 @@ pcre_regex_t *compile_regex(char const *regex, int options,
     return out;
 }
 
-int exec_regex(pcre_regex_t *regex, int startoffset, int options)
+int pcre_exec_regex(pcre_regex_t *regex, int startoffset, int options)
 {
     return pcre_exec(regex->re_compiled, regex->extra,
                      regex->str, strlen(regex->str),
@@ -72,7 +71,7 @@ int exec_regex(pcre_regex_t *regex, int startoffset, int options)
                      regex->sub_strs_inxs_len);
 }
 
-int get_groups(pcre_regex_t *regex, int groups_count)
+int pcre_get_groups(pcre_regex_t *regex, int groups_count)
 {
     return pcre_get_substring_list(regex->str,
                                    regex->sub_strs_inxs,
@@ -80,14 +79,24 @@ int get_groups(pcre_regex_t *regex, int groups_count)
                                    &regex->sub_strs);
 }
 
-int do_regex(pcre_regex_t *regex, char const *str,
+int pcre_do_regex(pcre_regex_t *regex, char const *str,
              int startoffset, int exec_options)
 {
     regex->str = (char*)str;
-    int ret = exec_regex(regex, startoffset, exec_options);
+    int ret = pcre_exec_regex(regex, startoffset, exec_options);
     if (ret)
-        get_groups(regex, ret);
+        pcre_get_groups(regex, ret);
     return ret;
+}
+
+char const *pcre_get_group(pcre_regex_t const *regex, int group,
+                      int groups_count)
+{
+    if (group < groups_count)
+        return regex->sub_strs[group];
+    else
+        return NULL;
+    
 }
 
 int free_pcre_groups(pcre_regex_t *regex)

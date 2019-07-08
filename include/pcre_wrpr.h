@@ -15,11 +15,13 @@ typedef struct pcre_regex_s
 } pcre_regex_t;
 
 int get_max_groups_count(char const *str);
-pcre_regex_t *compile_regex(char const *regex, int options,
+pcre_regex_t *pcre_compile_regex(char const *regex, int options,
                             int study_options);
-int exec_regex(pcre_regex_t *regex, int startoffset, int options);
-int get_groups(pcre_regex_t *regex, int groups_count);
-int do_regex(pcre_regex_t *regex, char const *str,
+int pcre_exec_regex(pcre_regex_t *regex, int startoffset, int options);
+int pcre_get_groups(pcre_regex_t *regex, int groups_count);
+int pcre_do_regex(pcre_regex_t *regex, char const *str,
              int startoffset, int exec_options);
+char const *pcre_get_group(pcre_regex_t const *regex, int group,
+                      int groups_count);
 int free_pcre_groups(pcre_regex_t *regex);
 int free_pcre_regex(pcre_regex_t *regex);
